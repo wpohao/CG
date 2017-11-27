@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+  position: absolute;
+  top: 0px;
+  width: 100%;
+  padding: 10px;
+  text-align: center;
+  color: #ffff00
+}
+
+body {
+  overflow: hidden;
+}
+
+
+</style>
+</head>
+
+<body> 
+	<div style="position:absolute;color:yellow;top:20px;width:100%;text-align:center">
+HW3
+<td align="center" valign="middle"><a href="https://jsfiddle.net/weipohao/jckhq2oy/">hw3.html</a></td>
+</div>
+<p style="position:absolute;top:20px;width:100%;text-align:center;color:yellow">
+移動(A、D) 砲管方向控制(Q、E) 上下控制(W、S)  發射(space)
+
+</p>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+  <script src="https://threejs.org/examples/js/controls/OrbitControls.js">
+  </script>
+  <script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+<script>
+var renderer, camera, controls, scene, axes;
+var stats;
+var keyboard = new KeyboardState();
+var theta1 = 0;
+var theta2 = 0.1;
+var theta3 = 0.1;
+var turn,turret,tank,cannon;
+var ball,box,oneSideTex;
+var pos, vel, force,boxpos, boxvel, boxforce;
+let parts;
+//var stopped=true;
+init();
+start();
+animate();
+ball.visible=false;
+function buildParts() {
+    var parts = [];
+    
+	var mat = new THREE.MeshNormalMaterial();
+  var bal = new THREE.MeshLambertMaterial({color:0xff0000});
+	var base = new THREE.Object3D();
+	var baseMesh = new THREE.Mesh (new THREE.BoxGeometry (40,10,20), mat);
+	base.add (baseMesh);
+	baseMesh.position.set (-10,5,0);
+	parts.push (base);
+
+    var turret = new THREE.Mesh (new THREE.CylinderGeometry (10,10,10, 30),mat);
+    parts.push (turret);
+    
+    var turn = new THREE.Object3D();
+    var turnMesh = new THREE.Mesh (new THREE.CylinderGeometry (1.5, 1.5, 10, 30), mat);
+    turn.add (turnMesh);
+    turnMesh.rotation.x = Math.PI/2;
+    parts.push (turn);
+    
+    var cannon = new THREE.Object3D()
+    var cannon0 = new THREE.Object3D()
+    var cannonMesh = new THREE.Mesh (new THREE.CylinderGeometry (1.5, 1.5, 10, 30), mat);
+    cannon0.add (cannonMesh);
+    cannonMesh.position.y = 5;
+    cannon.add (cannon0);
+    cannon0.rotation.z = -Math.PI/2;
+    parts.push (cannon);
+    
+  ball = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 20), bal);
+  pos = new THREE.Vector3();
+  vel = new THREE.Vector3();
+  force = new THREE.Vector3(0,-10,0);
+    //parts.push(ball);
+    //ball.visible=false;
+    
+    return parts;
+}
+
+function buildTank(){
+
+  parts = buildParts();
+  
+  tank = new THREE.Object3D();
+
+  let base = parts[0]
+  tank.add (base);
+  
+  turret = parts[1]
+  tank.add (turret)
+  turret.position.set (0, 15, 0);
+  console.log (theta1);
+  turret.rotation.y = theta1;
+  
+  turn = parts[2]
+  turn.position.x = 10
+  turn.rotation.z = theta2;
+  turret.add (turn);
+  
+  cannon = parts[3]
+  turn.add (cannon);
+  
+  parts.push(ball);
+  ball = parts[4]
+  turn.add(ball);
+  //ball.visible=false;
+  
+  return tank;
+}
+
+function start () {
+  stopped = false;
+	//pos.set (200*Math.random()-100, 0, 200*Math.random()-100);
+  //ball.position.x = 10; 
+  ball.visible=true;
+  vel.set (0.6, 0.3, 0).normalize().multiplyScalar(20);
+}
+
+function update(dt) {
+	vel.add (force.clone().multiplyScalar(dt));
+  pos.add (vel.clone().multiplyScalar(dt));
+  var an=(theta2)*(-1800/9); 
+  //console.log (an);
+  if (pos.y <(theta2)*(-2000/7)) {
+  	pos.y = 0;//theta2=0.7  pos.y=-200  //theta2=-0.2  pos.y=0
+    stopped = true;
+    pos.x = 10;
+    pos.z = 0;
+  }
+}
+
+function boxstart () {
+	//pos.set (200*Math.random()-100, 0, 200*Math.random()-100);
+  //ball.position.x = 10; 
+  boxvel.set (Math.random()-0.5, 0, Math.random()-0.5).normalize().multiplyScalar(20);
+}
+
+function boxupdate(dt) {
+  boxvel.add (boxforce.clone().multiplyScalar(dt));
+  boxpos.add (boxvel.clone().multiplyScalar(dt));
+  
+  if (boxpos.y < 0) {
+  	boxpos.y = 0;
+  }
+}
+
+
+function init() {
+
+  renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x888888);
+
+  document.body.appendChild(renderer.domElement);
+
+
+  camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 1, 1000);
+  camera.position.set(-100,80,100);  // important
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+  scene = new THREE.Scene();
+  
+  let gridXZ = new THREE.GridHelper(400, 40, 'red', 'white');
+  scene.add(gridXZ);
+  
+  var mainlight= new THREE.Object3D();
+  var mainlight2= new THREE.Object3D();
+  
+  var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+scene.add( directionalLight );
+var directionalLight2 = new THREE.DirectionalLight( 0xffffff, 1 );
+scene.add( directionalLight2 );
+	
+  mainlight.add(directionalLight);
+  mainlight.rotation.z=Math.PI/2;
+  mainlight2.add(directionalLight2);
+  mainlight2.rotation.z=-Math.PI/2;
+  scene.add(mainlight);
+  scene.add(mainlight2);
+
+
+  tank = buildTank();
+  tank.position.x = theta3;
+  scene.add (tank);
+  
+  //////////////////////////////////////////////box
+  var box0 = new THREE.Object3D();
+  box = new THREE.Mesh(new THREE.BoxGeometry(4, 25, 20), new THREE.MeshLambertMaterial({color:0xffffff}));
+  
+  loadTexture('https://i.imgur.com/CQPKGce.jpg');
+  
+  box0.add(box);
+  box0.position.set(100,12.5,-50);
+  scene.add(box0);
+  
+	//////////////
+  boxpos = new THREE.Vector3();
+  boxvel = new THREE.Vector3();
+  boxforce = new THREE.Vector3(0,-10,0);
+  
+  
+}
+
+function animate() {
+  
+  controls.update();
+  keyboard.update();
+  
+  if (keyboard.pressed ('Q')) {
+  	if(theta1<2.5){
+    theta1  += 0.01;}
+    console.log (theta1);
+  } else if (keyboard.pressed ('E')) {
+    if(theta1>-2.5)
+    theta1 -= 0.01;console.log (theta1);
+  } else if (keyboard.pressed ('W')) {
+    if(theta2<0.7)
+    theta2 += 0.01;
+  } else if (keyboard.pressed ('S')) {
+  	if(theta2>0.01)
+    theta2 -= 0.01;
+  } 
+  if (keyboard.pressed ('A')) {
+  	theta3  -= 1;
+  }else if (keyboard.pressed ('D')) {
+  	theta3  += 1;
+    }
+    
+    
+  turret.rotation.y = theta1; 
+  turn.rotation.z = theta2;
+  tank.position.x = theta3;
+  
+  ball.position.copy (pos);
+  box.position.copy (boxpos);
+	if (stopped) {
+    //pos.x = 10;
+    //keyboard.update();
+    
+  	if (keyboard.down("space")) {
+    	start();boxstart();
+    }
+  } else {
+  	update (0.08);
+    boxupdate(0.08);
+  }
+ 
+  if (oneSideTex !== undefined) {
+  	// texture already loaded ...
+  	box.material = oneSideTex;
+  }
+  
+  renderer.render (scene, camera);
+
+  requestAnimationFrame (animate);
+  
+}
+window.focus();
+
+function loadTexture( url ) {
+
+	// instantiate a loader
+  var loader = new THREE.TextureLoader();
+  loader.setCrossOrigin('');
+
+  // load a resource
+  loader.load(
+    // resource URL
+    url, // Lena
+    // Function when resource is loaded
+    function (tex) {
+    	console.log ('texture loaded ...');
+      
+      var textures = [
+      	new THREE.MeshLambertMaterial({map: tex}),
+      	new THREE.MeshLambertMaterial({map: tex}),
+      	new THREE.MeshLambertMaterial({map: tex}),
+      	new THREE.MeshLambertMaterial({map: tex}),
+      	new THREE.MeshLambertMaterial({map: tex}), // +z
+      	new THREE.MeshLambertMaterial({map: tex}),
+      ];
+      
+      oneSideTex = new THREE.MultiMaterial (textures)
+		},
+
+    // Function called when download progresses
+    function(xhr) {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    },
+    // Function called when download errors
+    function(xhr) {
+      console.log('An error happened');
+    }
+  );
+  
+}
+
+
+
+
+
+</script>
+</body>
+
+</html>

@@ -26,7 +26,7 @@ HW4
 <td align="center" valign="middle"><a href="https://jsfiddle.net/weipohao/89zL0cec/">hw4.html</a></td>
 </div>
 <p style="position:absolute;top:20px;width:100%;text-align:center;color:yellow">
-移動(上、下、左、右) 
+汽車倒車練習 移動(上、下、左、右) 
 </p>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
   <script src="https://threejs.org/examples/js/controls/OrbitControls.js">
@@ -115,7 +115,7 @@ function init() {
   scene.add(ambientLight);
 
   /////////////////////////////////////////////////////////obs
-	let loader1 = new THREE.TextureLoader();
+  let loader1 = new THREE.TextureLoader();
   loader1.setCrossOrigin ('')
   let obsMap = loader1.load( "https://i.imgur.com/VzJC8IL.png" );
   
@@ -136,7 +136,7 @@ function init() {
   texLoader = new THREE.TextureLoader();
   texLoader.setCrossOrigin('');
   texLoader.load(
-    'https://jyunming-chen.github.io/tutsplus/images/wood_oak_002_bump.jpg', // bumpmap
+  'https://raw.githubusercontent.com/wpohao/CG/master/model/body.bmp', // bumpmap
     function(tex) {
       bumpMap = tex;
       console.log ('bumpmap loaded ...');
@@ -145,20 +145,20 @@ function init() {
   );
 
   var loader = new THREE.ObjectLoader();
-  loader.load('https://jyunming-chen.github.io/tutsplus/models/toy-train.json',
+  loader.load('https://raw.githubusercontent.com/wpohao/CG/master/model/car.json',
     function(obj) {
-      obj.scale.set(5, 5, 5);
+      obj.scale.set(0.03, 0.03, 0.03);
      // obj.rotation.y = 90;//////////////////
       toy.add(obj);
       toytrain = obj;
     });
- 
+  toy.position.y=9;
   scene.add(toy);
   
   speed = 5.0;
   angle = Math.PI/2;
 
-	initHUD();
+  initHUD();
   renderer.autoClear = false;
   
 }
@@ -180,13 +180,13 @@ function animate() {
   rotateBillboard(obs2);
 
   if ( keyboard.pressed("left") ) 
-		angle += 0.01;               
-	if ( keyboard.pressed("right") )
-		angle -= 0.01;               
-	if ( keyboard.pressed("up") )  
-		speed += 0.5;        
-	if ( keyboard.pressed("down") )  
-		speed -= 0.5;
+    angle += 0.01;               
+  if ( keyboard.pressed("right") )
+    angle -= 0.01;               
+  if ( keyboard.pressed("up") )  
+    speed += 0.5;        
+  if ( keyboard.pressed("down") )  
+    speed -= 0.5;
   
   if (bumpMap  && toytrain) {
         toytrain.traverse(
@@ -198,12 +198,12 @@ function animate() {
         });
   }
     var dt = clock.getDelta();
-    speed = Math.clamp (speed, 0.1, 20.0);		
-	vel = new THREE.Vector3(0,0,speed);
-	
-	vel.applyAxisAngle (new THREE.Vector3(0,1,0), angle);
-	pos.add (vel.clone().multiplyScalar(dt)); 	
-	
+    speed = Math.clamp (speed, 0.1, 20.0);    
+  vel = new THREE.Vector3(0,0,speed);
+  
+  vel.applyAxisAngle (new THREE.Vector3(0,1,0), angle);
+  pos.add (vel.clone().multiplyScalar(dt));   
+  
  // camera2.position.set(100,100,100);
   // nothing happens...
   // because you did not identify what is 'toytrain'...
@@ -211,14 +211,14 @@ function animate() {
   if (toytrain !== undefined && turn) {
     toytrain.position.copy(pos);
     toytrain.rotation.y = angle;
-    var relativeCameraOffset = new THREE.Vector3 (0,25,-30);
+    var relativeCameraOffset = new THREE.Vector3 (0,2000,-2100);
 
-		var cameraOffset = relativeCameraOffset.applyMatrix4( toytrain.matrixWorld );
+    var cameraOffset = relativeCameraOffset.applyMatrix4( toytrain.matrixWorld );
 
-		camera.position.x = cameraOffset.x;
-		camera.position.y = cameraOffset.y;
-		camera.position.z = cameraOffset.z;
-		camera.lookAt( toytrain.position );
+    camera.position.x = cameraOffset.x;
+    camera.position.y = cameraOffset.y;
+    camera.position.z = cameraOffset.z;
+    camera.lookAt( toytrain.position );
     
   }
 ////////////////////////////////////////////////////mult scene
@@ -263,7 +263,7 @@ function render() {
 
   renderer.clear();
 
-	renderer.setViewport(0, 0, WW / 2, HH);
+  renderer.setViewport(0, 0, WW / 2, HH);
   camera.aspect = WW / 2 / HH;
   camera.updateProjectionMatrix();
   renderer.render(scene, camera);
@@ -276,11 +276,6 @@ function render() {
   renderer.render(sceneHUD, camera2HUD);
 
 }
-
-
-
-
-
 
 
 </script>

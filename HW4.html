@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+  top: 5%;
+  position: absolute;
+  color: yellow;
+  text-align: center;
+  width: 100%;
+}
+
+body {
+  overflow: hidden
+}
+
+
+</style>
+</head>
+
+<body> 
+	<div style="position:absolute;top:20px;color:yellow;width:100%;text-align:center">
+HW4
+<td align="center" valign="middle"><a href="https://jsfiddle.net/weipohao/89zL0cec/">hw4.html</a></td>
+</div>
+<p style="position:absolute;top:20px;width:100%;text-align:center;color:yellow">
+移動(上、下、左、右) 
+</p>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+  <script src="https://threejs.org/examples/js/controls/OrbitControls.js">
+  </script>
+  <script src="https://jyunming-chen.github.io/tutsplus/js/KeyboardState.js"></script>
+<script>
+var scene, renderer, camera,camera2,controls,controls2;
+var clock;
+var toytrain;
+var bumpMap;
+var keyboard = new KeyboardState();
+var turn = true;
+var pos = new THREE.Vector3();
+var speed, angle, vel;
+var obs1,obs2;
+var cameraHUD, camera2HUD, sceneHUD,view;
+
+(function() {
+  Math.clamp = function(val,min,max){
+    return Math.min(Math.max(val,min),max);
+    
+  }})();
+
+init();
+animate();
+
+function initHUD() {
+
+  sceneHUD = new THREE.Scene();
+  cameraHUD = new THREE.OrthographicCamera(-10.5, 10.5, 10.5, -10.5, -10, 10);
+  cameraHUD.position.z=5;
+  camera2HUD = new THREE.OrthographicCamera(-10.5, 10.5, 10.5, -10.5, -10, 10);
+  camera2HUD.position.z=5;
+
+  var lineGeometry = new THREE.Geometry();
+  lineGeometry.vertices.push(new THREE.Vector3(-10, -10, 0),
+    new THREE.Vector3(10, -10, 0),
+    new THREE.Vector3(10, 10, 0),
+    new THREE.Vector3(-10, 10, 0),
+    new THREE.Vector3(-10, -10, 0));
+  var line = new THREE.Line(lineGeometry,
+    new THREE.LineBasicMaterial({
+      color: 0xffffff
+    }));
+  sceneHUD.add(line);
+}
+
+function init() {
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+
+  renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+  renderer.setSize(width, height);
+  renderer.setClearColor(0x888888);
+  document.body.appendChild(renderer.domElement);
+
+  scene = new THREE.Scene();
+  toy = new THREE.Scene();
+  clock = new THREE.Clock();
+
+  camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+  camera.position.set(-70,80,0);
+  
+  camera2 = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+  camera2.position.set(-70,300,0);
+  //view=camera2.position.clone();
+ // camera2.lookAt(new THREE.Vector3(10,0,10));
+  
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls2 = new THREE.OrbitControls(camera2, renderer.domElement);
+  
+  controls.enableKeys = false;
+  controls2.enableKeys = false;
+
+  var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+  scene.add(gridXZ);
+//////////////////////////////////////////////////////////////
+  var pointLight = new THREE.PointLight(0xffffff);
+  pointLight.position.set(0, 300, 200);
+  scene.add(pointLight);
+
+  var ambientLight = new THREE.AmbientLight(0x111111);
+  scene.add(ambientLight);
+
+  /////////////////////////////////////////////////////////obs
+	let loader1 = new THREE.TextureLoader();
+  loader1.setCrossOrigin ('')
+  let obsMap = loader1.load( "https://i.imgur.com/VzJC8IL.png" );
+  
+  material = new THREE.MeshBasicMaterial({
+    side: THREE.DoubleSide,
+    transparent: true, // key to cutout texture
+    map: obsMap
+  });
+
+  obs1 = new THREE.Mesh(new THREE.PlaneGeometry(25, 25), material);
+  scene.add(obs1);
+
+  obs2 = obs1.clone();
+  scene.add(obs2);
+  
+  //////////////////////////////////////////////////////////////
+
+  texLoader = new THREE.TextureLoader();
+  texLoader.setCrossOrigin('');
+  texLoader.load(
+    'https://jyunming-chen.github.io/tutsplus/images/wood_oak_002_bump.jpg', // bumpmap
+    function(tex) {
+      bumpMap = tex;
+      console.log ('bumpmap loaded ...');
+    }
+    // the other two left NULL
+  );
+
+  var loader = new THREE.ObjectLoader();
+  loader.load('https://jyunming-chen.github.io/tutsplus/models/toy-train.json',
+    function(obj) {
+      obj.scale.set(5, 5, 5);
+     // obj.rotation.y = 90;//////////////////
+      toy.add(obj);
+      toytrain = obj;
+    });
+ 
+  scene.add(toy);
+  
+  speed = 5.0;
+  angle = Math.PI/2;
+
+	initHUD();
+  renderer.autoClear = false;
+  
+}
+
+
+function animate() {
+  controls.update();
+  controls2.update();
+  keyboard.update();
+  
+    //view = new THREE.Vector3(camera2.position.x,20,0);
+   // camera2.lookat(new THREE.Vector3(0,10,0));
+
+  
+  obs1.position.set(50, 12, 0);
+  rotateBillboardNew(obs1);
+
+  obs2.position.set(-30, 12, 20);
+  rotateBillboard(obs2);
+
+  if ( keyboard.pressed("left") ) 
+		angle += 0.01;               
+	if ( keyboard.pressed("right") )
+		angle -= 0.01;               
+	if ( keyboard.pressed("up") )  
+		speed += 0.5;        
+	if ( keyboard.pressed("down") )  
+		speed -= 0.5;
+  
+  if (bumpMap  && toytrain) {
+        toytrain.traverse(
+        function(mesh) {
+          if (mesh instanceof THREE.Mesh) {
+            mesh.material.bumpMap = bumpMap;
+            mesh.material.bumpScale = 0.2;
+          }
+        });
+  }
+    var dt = clock.getDelta();
+    speed = Math.clamp (speed, 0.1, 20.0);		
+	vel = new THREE.Vector3(0,0,speed);
+	
+	vel.applyAxisAngle (new THREE.Vector3(0,1,0), angle);
+	pos.add (vel.clone().multiplyScalar(dt)); 	
+	
+ // camera2.position.set(100,100,100);
+  // nothing happens...
+  // because you did not identify what is 'toytrain'...
+  // need to dig into scene.children
+  if (toytrain !== undefined && turn) {
+    toytrain.position.copy(pos);
+    toytrain.rotation.y = angle;
+    var relativeCameraOffset = new THREE.Vector3 (0,25,-30);
+
+		var cameraOffset = relativeCameraOffset.applyMatrix4( toytrain.matrixWorld );
+
+		camera.position.x = cameraOffset.x;
+		camera.position.y = cameraOffset.y;
+		camera.position.z = cameraOffset.z;
+		camera.lookAt( toytrain.position );
+    
+  }
+////////////////////////////////////////////////////mult scene
+
+  requestAnimationFrame(animate);
+  render();
+}
+window.focus();
+
+// much simpler...
+// using lookAt of Object3D
+function rotateBillboardNew (mesh) {
+  let groundShadow = camera.position.clone();
+  groundShadow.y = 30;
+  mesh.lookAt (groundShadow);
+}
+
+function rotateBillboard(mesh) {
+  var b = mesh.position.clone(); // billboard location
+  var rotaxis = new THREE.Vector3();
+  var v, yhat, n;
+
+  v = camera.position.clone(); // clone the camera position
+  yhat = new THREE.Vector3(0, 1, 0); // up
+  n = new THREE.Vector3(0, 0, 1); // billboard normal
+
+  v.subVectors(v, b); // v-b
+  v.sub(yhat.clone().multiplyScalar(v.dot(yhat)));
+  v.normalize(); // pxz
+
+  rotangle = Math.acos(v.dot(n));
+  rotaxis.crossVectors(n, v);
+  if (rotaxis.dot(yhat) < 0) rotangle *= -1;
+
+  mesh.rotation.y = rotangle;
+}
+
+function render() {
+
+  var WW = window.innerWidth;
+  var HH = window.innerHeight;
+
+  renderer.clear();
+
+	renderer.setViewport(0, 0, WW / 2, HH);
+  camera.aspect = WW / 2 / HH;
+  camera.updateProjectionMatrix();
+  renderer.render(scene, camera);
+  renderer.render(sceneHUD, cameraHUD);
+
+  renderer.setViewport(WW / 2, 0, WW / 2, HH);
+  camera2.aspect = WW / 2 / HH;
+  camera2.updateProjectionMatrix();
+  renderer.render(scene, camera2);
+  renderer.render(sceneHUD, camera2HUD);
+
+}
+
+
+
+
+
+
+
+</script>
+</body>
+
+</html>

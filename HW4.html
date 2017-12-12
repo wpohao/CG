@@ -26,7 +26,7 @@ HW4
 <td align="center" valign="middle"><a href="https://jsfiddle.net/weipohao/89zL0cec/">hw4.html</a></td>
 </div>
 <p style="position:absolute;top:20px;width:100%;text-align:center;color:yellow">
-汽車倒車練習 移動(上、下、左、右) 
+汽車移動(方向鍵上、下、左、右) 
 </p>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
   <script src="https://threejs.org/examples/js/controls/OrbitControls.js">
@@ -90,10 +90,10 @@ function init() {
   clock = new THREE.Clock();
 
   camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
-  camera.position.set(-70,80,0);
+  camera.position.set(70,80,0);
   
   camera2 = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
-  camera2.position.set(-70,300,0);
+  camera2.position.set(70,300,0);
   //view=camera2.position.clone();
  // camera2.lookAt(new THREE.Vector3(10,0,10));
   
@@ -201,7 +201,7 @@ function animate() {
     speed = Math.clamp (speed, 0.1, 20.0);    
   vel = new THREE.Vector3(0,0,speed);
   
-  vel.applyAxisAngle (new THREE.Vector3(0,1,0), angle);
+  vel.applyAxisAngle (new THREE.Vector3(0,1,0), angle+Math.PI);
   pos.add (vel.clone().multiplyScalar(dt));   
   
  // camera2.position.set(100,100,100);
@@ -211,7 +211,7 @@ function animate() {
   if (toytrain !== undefined && turn) {
     toytrain.position.copy(pos);
     toytrain.rotation.y = angle;
-    var relativeCameraOffset = new THREE.Vector3 (0,2000,-2100);
+    var relativeCameraOffset = new THREE.Vector3 (0,2000,2100);
 
     var cameraOffset = relativeCameraOffset.applyMatrix4( toytrain.matrixWorld );
 
@@ -276,6 +276,7 @@ function render() {
   renderer.render(sceneHUD, camera2HUD);
 
 }
+
 
 
 </script>

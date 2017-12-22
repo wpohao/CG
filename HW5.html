@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+<style>
+#info {
+  top: 5%;
+  position: absolute;
+  color: yellow;
+  text-align: center;
+  width: 100%;
+}
+
+body {
+  overflow: hidden
+}
+
+
+</style>
+</head>
+
+<body> 
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/84/three.min.js"></script>
+<script src="https://threejs.org/examples/js/controls/OrbitControls.js">
+
+
+</script>
+<div id='info'>
+  HW5
+  <a href="https://jsfiddle.net/weipohao/swgzjjw5/">hw5.html</a>
+</div>
+
+<script>
+
+class Button {
+  constructor(color, name) {
+    this.on = false;
+    this.hsl = color.getHSL();
+    this.obj = this.makeButton(name);
+  }
+
+  get isOn() {
+    return this.on;
+  }
+
+  toggle() {
+    this.on = !this.on;
+    this.update();
+  }
+
+  update() {
+    if (this.on) {
+      this.obj.scale.set (1,0.5,1);
+      this.obj.children[0].material.color.setHSL 
+        (this.hsl.h, 0, 1);
+    } else {
+    	this.obj.scale.set(1,1,1);
+    	this.obj.children[0].material.color.setHSL 
+         (this.hsl.h, this.hsl.s, this.hsl.l);
+    }
+  }
+  
+
+  makeButton(name) {
+    let mesh = new THREE.Mesh(new THREE.BoxGeometry(2, 3, 2),
+      new THREE.MeshLambertMaterial());
+    let button = new THREE.Object3D();
+    button.add(mesh);
+    mesh.material.color.setHSL (this.hsl.h, this.hsl.s, this.hsl.l)
+    mesh.position.y = 27;
+    button.name = name;  // a string
+    return button;
+  }
+
+}
+
+///////////////////////////////////////////////////////
+
+var scene, renderer, camera,chairs,desks,lamps;
+var controls;
+var desk,chair,lamp;
+var mesh, controls;
+var raycaster = new THREE.Raycaster();
+var pickables = [];
+var mouse = new THREE.Vector2()
+
+init();
+animate();
+
+function init() {
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+
+  renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
+  renderer.setSize(width, height);
+  renderer.setClearColor(0x888888);
+  document.body.appendChild(renderer.domElement);
+  //
+  document.addEventListener('mousedown', onDocumentMouseDown, false);
+//
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(45, width / height, 1, 10000);
+  camera.position.set(-60,70,90); 
+  camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+  var gridXZ = new THREE.GridHelper(200, 20, 'red', 'white');
+  scene.add(gridXZ);
+
+  var pointLight = new THREE.PointLight(0xffff66,5,100);
+  pointLight.position.set(-20, 35, -10);
+  scene.add(pointLight);
+
+  
+  
+  var ambientLight = new THREE.AmbientLight(0x555555);
+  scene.add(ambientLight);
+
+  ////////////////////////////////////////////////////////////////////
+
+
+	chairs = new THREE.Scene();
+  var loader = new THREE.ObjectLoader();
+  loader.load('https://raw.githubusercontent.com/wpohao/CG/master/chair/chair.json',
+    function(obj) {
+      obj.scale.set(1, 1, 1);
+      chairs.add(obj);
+      chair = obj;
+    });
+    chairs.position.z = 30;
+scene.add(chairs);
+
+////////////////////////////////////////////
+
+desks = new THREE.Scene();
+  var deloader = new THREE.ObjectLoader();
+  deloader.load('https://raw.githubusercontent.com/wpohao/CG/master/desk/desk.json',
+    function(obj) {
+      obj.scale.set(10, 10, 10);
+      desks.add(obj);
+      desk = obj;
+    });
+scene.add(desks);
+//////////////////////////////////////////////
+
+lamps = new THREE.Scene();
+  var laloader = new THREE.ObjectLoader();
+  laloader.load('https://raw.githubusercontent.com/wpohao/CG/master/lamp/lamp.json',
+    function(obj) {
+      obj.scale.set(10, 10, 10);
+      lamps.add(obj);
+      lamp = obj;
+    });
+    lamps.position.set(-20,27,-10);
+scene.add(lamps);
+
+//////////////////////////////////////////button
+button = new Button(new THREE.Color (0x12ffff), 'cyan');
+  scene.add(button.obj);
+  pickables.push(button.obj);
+  
+
+  button2 = new Button(new THREE.Color (0xff12ff), 'purple');
+  scene.add(button2.obj);
+  button2.obj.position.x = 3;
+  pickables.push(button2.obj);
+
+
+}
+
+
+
+function onDocumentMouseDown(event) {
+
+  event.preventDefault();
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // find intersections
+  raycaster.setFromCamera(mouse, camera);
+  var intersects = raycaster.intersectObjects(pickables, true);
+  if (intersects.length > 0) {
+    let picked = intersects[0].object.parent.name;
+    switch (picked) {
+    case 'cyan':
+    	button.toggle();
+      break;
+    case 'purple':
+    	button2.toggle();
+      break;
+    }
+  }
+
+}
+
+
+function animate() {
+  controls.update();
+
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+
+</script>
+</body>
+
+</html>
